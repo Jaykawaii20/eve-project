@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Creator {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  email             String
+  hashedPassword    String?
+  phone             String?
+  aliasName         String?
+  avatarImage       String?
+  bio               String?
+  interest          String?
+  subscriptionPlan  String?
+  tokenBalance      String?
+  paymentInfo       String?
+  authProvider      String?
+  titleRole         String?
+  posts             Post[]
+  chat              Chat[]
+  message           Message[]
+  subscriptions     Subscription[]
+  tokenTransactions TokenTransaction[]
+  postIntegration   PostIntegration[]
+  inAppSupport      InAppSupport[]
+  discoveryBookmark DiscoveryBookmark[]
+}
+
+
+
+model Audience {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  email            String
+  hashedPassword   String?
+  phone            String?
+  aliasName        String?
+  avatarImage      String?
+  bio              String?
+  interest         String?
+  subscriptionPlan String?
+  tokenBalance     String?
+  paymentInfo      String?
+  authProvider     String?
+  titleRole        String?
+  chat             Chat[]
+  message          Message[]
+  subscriptions    Subscription[]
+  achievements     Achievement[]
+  // tokenTransactions TokenTransaction[]
+}
+
+model Post {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  creator             Creator           @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  creatorUserId           String            @db.ObjectId
+  contentType      ContentType
+  content          String
+  text             String
+  hashtags         String
+  category         String
+  timestamp        DateTime          @default(now())
+  isPrivate        String
+  subscriptionTier SubscriptionTier
+  postIntegration  PostIntegration[]
+}
+
+model PostIntegration {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String   @db.ObjectId
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId String   @db.ObjectId
+  timestamp DateTime @default(now())
+}
+
+model Chat {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  sender         Audience  @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  senderUserId   String    @db.ObjectId
+  receiver       Creator   @relation(fields: [receiverUserId], references: [id], onDelete: Cascade)
+  receiverUserId String    @db.ObjectId
+  tokenCost      String
+  timestamp      String
+  status         Status
+  message        Message[]
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  chat           Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId         String   @db.ObjectId
+  sender         Audience @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  senderUserId   String   @db.ObjectId
+  receiver       Creator  @relation(fields: [receiverUserId], references: [id], onDelete: Cascade)
+  receiverUserId String   @db.ObjectId
+}
+
+enum Status {
+  pending
+  accepted
+  rejected
+}
+
+enum IntgrationType {
+  like
+  tip
+}
+
+enum SubscriptionTier {
+  public
+  basic
+  premium
+}
+
+enum ContentType {
+  videoReel
+  image
+}
+
+model Subscription {
+  id                   String           @id @default(auto()) @map("_id") @db.ObjectId
+  subscriber           Audience         @relation(fields: [subscriberUserId], references: [id], onDelete: Cascade)
+  subscriberUserId     String           @db.ObjectId
+  creator              Creator          @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  creatorUserId        String           @db.ObjectId
+  subscriptionPlanId   String
+  subscriptionTier     SubscriptionTier
+  subscriptionDuration DateTime
+  subscriptionPrice    String
+}
+
+model Achievement {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  audience       Audience @relation(fields: [audienceId], references: [id], onDelete: Cascade)
+  audienceId     String   @db.ObjectId
+  title          String
+  description    String
+  reward         String
+  reputationRole String
+}
+
+model TokenTransaction {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  creator         Creator         @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  creatorUserId   String          @db.ObjectId
+  amount          Int
+  timestamp       DateTime        @default(now())
+  transactionType TransactionType
+}
+
+enum TransactionType {
+  purchase
+  tip
+  subscriptionPayment
+}
+
+model InAppSupport {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  creator          Creator  @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  creatorUserId    String   @db.ObjectId
+  issueDescription String
+  timestamp        DateTime @default(now())
+}
+
+enum AppStatus {
+  open
+  inProgress
+  closed
+}
+
+model DiscoveryBookmark {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  creator          Creator  @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  creatorUserId    String   @db.ObjectId
+  searchQuery String
+}
